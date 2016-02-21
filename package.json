@@ -62,5 +62,11 @@
     "build": "cross-env NODE_ENV=production UV_THREADPOOL_SIZE=100 webpack --config ./webpack.config",
     "deploy": "gh-pages -d build"
   },
-  "repository": "github:react-toolbox/react-toolbox-example"
+  "repository": "github:react-toolbox/react-toolbox-example",
+  "dependencies": {
+    "coffee-loader": "^0.7.2",
+    "coffee-script": "^1.10.0",
+    "jquery": "^2.2.0",
+    "raw-loader": "^0.5.1"
+  }
 }

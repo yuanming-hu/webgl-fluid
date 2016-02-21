@@ -12,14 +12,15 @@ import Header from './components/header';
 import Navigation from 'react-toolbox/lib/navigation';
 import Link from 'react-toolbox/lib/link';
 import style from './style';
+import './fluid/src/glslfluid'
 
 const resolutions = [
-    {value: 16, label: '16x16'},
-    {value: 32, label: '32x32'},
-    {value: 64, label: '64x64'},
-    {value: 128, label: '128x128'},
-    {value: 256, label: '256x256'},
-    {value: 512, label: '512x512'}
+    {value: '16', label: '16x16'},
+    {value: '32', label: '32x32'},
+    {value: '64', label: '64x64'},
+    {value: '128', label: '128x128'},
+    {value: '256', label: '256x256'},
+    {value: '512', label: '512x512'}
 ];
 
 const methods = [
@@ -40,13 +41,14 @@ class Options extends React.Component {
         super(props);
         this.state = {
             warmStarting: true, rk2Advection: false, jacobiDamping: 0.67, iterations: 10,
-            method: 'pic', resolution: 128, timeStep: 0.01, substeps: 5, flipBlending: 0.95
+            method: 'pic', resolution: '128', timeStep: 0.01, substeps: 5, flipBlending: 0.95
         };
         window.settings = this.state;
     }
 
     handleChange(key, value) {
         this.setState({[key]: value});
+        window.settings = this.state;
     }
 
     render() {
@@ -55,7 +57,7 @@ class Options extends React.Component {
             <div style={{margin: '0 auto', width: '1080px'}}>
                 <Card style={{width: '512px', float: 'left', margin: '10px', height: '600px'}}>
                     <CardTitle title="Visualization"/>
-                    <canvas id="main-canvas" width="512" height="512"></canvas>
+                    <canvas id="main-canvas" width="512" height="512" style={{marginTop: 'auto'}}></canvas>
                 </Card>
                 <Card style={{width: '200px', float: 'left', margin: '10px 0px 0px 0px', height: '600px'}}>
                     <CardTitle title="Control"/>
