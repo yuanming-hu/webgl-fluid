@@ -1,0 +1,66 @@
+{
+  "name": "react-toolbox-example",
+  "version": "0.11.4",
+  "description": "A set of complementary tools to ReactJS.",
+  "author": "React Toolbox Team (http://github.com/react-toolbox)",
+  "contributors": [
+    {
+      "name": "Javi Jimenez Villar",
+      "url": "http://soyjavi.com/",
+      "email": "javi.jimenez.villar@gmail.com"
+    },
+    {
+      "name": "Javi Velasco Arjona",
+      "url": "http://javivelasco.com/",
+      "email": "javier.velasco86@gmail.com"
+    }
+  ],
+  "bugs": {
+    "url": "https://github.com/react-toolbox/react-toolbox/issues",
+    "email": "issues@react-toolbox.com"
+  },
+  "keywords": [
+    "react",
+    "react-component",
+    "material design",
+    "toolbox",
+    "components"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "autoprefixer": "^6.0.3",
+    "babel-core": "^6.1.4",
+    "babel-eslint": "^4.1.5",
+    "babel-loader": "^6.0.1",
+    "babel-plugin-react-transform": "^1.1.1",
+    "babel-preset-es2015": "^6.1.4",
+    "babel-preset-react": "^6.1.4",
+    "classnames": "^2.2.1",
+    "cross-env": "^1.0.1",
+    "css-loader": "^0.21.0",
+    "express": "^4.13.3",
+    "extract-text-webpack-plugin": "^0.9.0",
+    "node-sass": "^3.4.1",
+    "normalize.css": "^3.0.3",
+    "postcss-loader": "^0.7.0",
+    "react": "^0.14",
+    "react-addons-css-transition-group": "^0.14.2",
+    "react-dom": "^0.14.2",
+    "react-toolbox": "^0.13.1",
+    "react-transform-catch-errors": "^1.0.0",
+    "react-transform-hmr": "^1.0.1",
+    "redbox-react": "^1.1.1",
+    "sass-loader": "^3.0.0",
+    "style-loader": "^0.13.0",
+    "toolbox-loader": "0.0.3",
+    "webpack": "^1.12.0",
+    "webpack-dev-middleware": "^1.2.0",
+    "webpack-hot-middleware": "^2.4.1"
+  },
+  "scripts": {
+    "start": "node ./server",
+    "build": "cross-env NODE_ENV=production UV_THREADPOOL_SIZE=100 webpack --config ./webpack.config",
+    "deploy": "gh-pages -d build"
+  },
+  "repository": "github:react-toolbox/react-toolbox-example"
+}
