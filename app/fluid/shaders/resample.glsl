@@ -5,7 +5,9 @@ uniform highp sampler2D uTexture;
 uniform highp sampler2D vTexture;
 uniform float flipAlpha;
 uniform vec2 bufSize;
+uniform int rk2;
 varying vec2 textureCoord;
+uniform float deltaT;
 
 //***  Vertex Shader  ***
 void main(void)
@@ -29,12 +31,19 @@ vec2 getBackupVel(vec2 pos) {
     return vel;
 }
 
+vec2 sampleFlipVelocity(in vec2 pos, in vec2 particleVel) {
+    vec2 vel = getVel(pos);
+    vec2 backupVel = getBackupVel(pos);
+    return (1. - flipAlpha) * (vel) + flipAlpha * (particleVel + vel - backupVel);
+}
+
 void main(void)
 {
     vec4 data = texture2D(particleTexture, textureCoord);
-    vec2 pos = data.xy;
-    vec2 vel = getVel(pos);
-    vec2 backupVel = getBackupVel(pos);
-    gl_FragColor = vec4(pos, (1. - flipAlpha) * (vel) + flipAlpha * (data.zw + vel - backupVel));
+    data.zw = sampleFlipVelocity(data.xy, data.zw);
+    if (rk2 == 1) {
+        data.zw = sampleFlipVelocity(data.xy + data.zw * deltaT, data.zw);
+    }
+    gl_FragColor = data;
 }
 

@@ -3,6 +3,7 @@ attribute vec2 position;
 uniform vec2 bufSize;
 uniform highp sampler2D systemTexture;
 uniform highp sampler2D pressure;
+uniform highp float damping;
 
 //***  Vertex Shader  ***
 void main(void)
@@ -53,8 +54,7 @@ void main(void)
             p += ny;
         }
         p *= Ad;
-        const float omega = 0.6667;
-        p = (1. - omega) * last + omega * p;
+        p = (1. - damping) * last + damping * p;
     }
     gl_FragColor = encode32(p);
 }

@@ -352,7 +352,6 @@ class GPU
 
   loadProgram: (name)=>
     msg = require('../shaders/' + name + '.glsl')
-    console.log msg
     [globals, vs, fs] = @parseProgram msg
     @programs[name] = new Program (@createProgram vs, fs), globals
 

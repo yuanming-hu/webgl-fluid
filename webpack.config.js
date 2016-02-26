@@ -16,7 +16,7 @@ module.exports = {
         publicPath: '/'
     },
     resolve: {
-        extensions: ['', '.jsx', '.scss', '.js', '.json', '.glsl', '.coffee'],
+        extensions: ['', '.jsx', '.scss', '.js', '.json', '.glsl', '.coffee', 'png'],
         modulesDirectories: [
             'node_modules',
             path.resolve(__dirname, './node_modules')
@@ -44,6 +44,10 @@ module.exports = {
             {
                 test: /\.glsl$/,
                 loader: 'raw'
+            },
+            {
+                test: /\.png$/,
+                loader: 'url-loader?mimetype=image/png'
             }
         ]
     },

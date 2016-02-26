@@ -4,8 +4,6 @@ require('./webgl')
 class MAC
   constructor: ->
     console.log "GLSLFluid initialzing"
-    window.gpu = new GPU()
-    gpu.initialize @getPrograms()
     @initialOffset = [0.25, 0.25]
 
     @dim = 64
@@ -41,12 +39,6 @@ class MAC
     @systemFb = new Framebuffer(@dim, @dim)
     @poissonSolver = new PoissonSolver(@dim)
 
-  getPrograms: ->
-    ['initialize', 'iterate', 'points',
-      'markCells', 'buildSystem', 'applyExternalForces',
-      'jacobiSolver', 'advect', 'applyBoundaryCondAndMarkValid',
-      'extrapolate', 'jacobiSolver', 'applyPressure', 'moveMarkers']
-
   markCells: ()->
     prog = gpu.programs.markCells.use().setUniforms
       bufSize: [@cellsFb.width, @cellsFb.height]
@@ -67,13 +59,17 @@ class MAC
     pointIdBuffer.itemSize = 1
     pointIdBuffer.numItems = numPoints
     @pointIdBuffer = pointIdBuffer
+    @initializeSimulation()
 
+
+  initializeSimulation: =>
     gpu.programs.initialize.draw
       uniforms:
         bufSize: [@dim, @dim]
         offset: @initialOffset
       target: @particleFbs
       vertexData: 'quad'
+    @poissonSolver.reset()
 
   renderParticles: ()=>
     prog = gpu.programs.points.use().setUniforms
@@ -128,6 +124,9 @@ class MAC
         pressureTexture: [@pressureFbs, gl.NEATEST]
       vertexData: 'quad'
       target: @uFbs
+
+  getUseRK2: ->
+    return if settings.rk2Advection then 1 else 0
 
   shouldBackupVelocity: ->
     0
@@ -240,12 +239,8 @@ class MAC
 
 class PIC extends MAC
   constructor: ->
-    window.gpu = new GPU()
-    programs = @getPrograms()
-    gpu.initialize programs
     @initialOffset = [0.05, 0.02]
 
-    @flipAlphaPerSecond = 0.0006
     @dim = parseFloat(settings.resolution)
     @particleFbs = new DoubleFramebuffer(@dim, @dim)
     @pressureFbs = new DoubleFramebuffer(@dim, @dim, 1)
@@ -259,15 +254,11 @@ class PIC extends MAC
     @t = 0.0
     @simulate()
     @initializeMouse()
-
-
-  getPrograms: ->
-    ['initialize', 'iterate', 'points',
-      'markCells', 'buildSystem', 'applyExternalForcesPIC',
-      'jacobiSolver', 'advect', 'applyBoundaryConditions',
-      'extrapolate', 'jacobiSolver', 'applyPressure', 'moveParticles',
-      'scatterVelocity', 'normalizeVelocity', 'resample', 'applyExternalForces'
-    ]
+    @needReset = false
+    @deleted = false
+    window.simulationReset =  =>
+      @needReset = true
+      window.paused = false
 
   moveParticles: (deltaT)=>
     gpu.programs.moveParticles.draw
@@ -319,7 +310,8 @@ class PIC extends MAC
     rasterizeCompoment(0, @vFbs)
 
   getFlipAlpha: (deltaT)=>
-    return Math.pow(@flipAlphaPerSecond, deltaT)
+    flipAlphaPerSecond = Math.pow(0.1, (1 - settings.flipBlending) * 10) - 1e-10;
+    return Math.pow(flipAlphaPerSecond, deltaT)
 
   resample: (deltaT) =>
     gpu.programs.resample.draw
@@ -329,6 +321,8 @@ class PIC extends MAC
         vTexture: [@vFbs, gl.LINEAR]
         flipAlpha: @getFlipAlpha(deltaT)
         particleTexture: [@particleFbs, gl.NEAREST]
+        deltaT: deltaT
+        rk2: @getUseRK2()
       vertexData: 'quad'
       target: @particleFbs
 
@@ -362,6 +356,15 @@ class PIC extends MAC
     @moveParticles(deltaT)
 
   step: =>
+    if @deleted
+      return
+    if paused
+      requestAnimationFrame @step
+      return
+
+    if @needReset
+      @needReset = false
+      @initializeSimulation()
     deltaT = settings.timeStep
     gpu.timeingStats.end()
     gpu.fpsStats.end()
@@ -378,13 +381,20 @@ class PIC extends MAC
     @initialize()
     requestAnimationFrame @step
 
+  delete: =>
+    @deleted = true
+
 class PoissonSolver
   constructor: (@dim)->
     @fbs = (new Framebuffer(@dim, @dim) for i in [1..2])
+    @reset()
+
+  reset: =>
     @first = true
 
   solve: (systemFb, pressureFbs)=>
-    if @first
+    if @first or not settings.warmStarting
+      console.log 'clear'
       pressureFbs.source.bindFB().clear([0.5, 0, 0, 0])
       @first = false
 
@@ -395,8 +405,33 @@ class PoissonSolver
           bufSize: [@dim, @dim]
           systemTexture: systemFb
           pressure: pressureFbs
+          damping: parseFloat(settings.jacobiDamping)
         target: pressureFbs
         vertexData: 'quad'
 
+window.initialize = ()=>
+  window.gpu = new GPU()
+  programs = ['initialize', 'iterate', 'points',
+    'markCells', 'buildSystem', 'applyExternalForcesPIC',
+    'jacobiSolver', 'advect', 'applyBoundaryConditions',
+    'extrapolate', 'jacobiSolver', 'applyPressure', 'moveParticles',
+    'scatterVelocity', 'normalizeVelocity', 'resample', 'applyExternalForces',
+  ].concat(['initialize', 'iterate', 'points',
+    'markCells', 'buildSystem', 'applyExternalForcesPIC',
+    'jacobiSolver', 'advect', 'applyBoundaryConditions',
+    'extrapolate', 'jacobiSolver', 'applyPressure', 'moveParticles',
+    'scatterVelocity', 'normalizeVelocity', 'resample', 'applyExternalForces'
+  ])
+  gpu.initialize programs
+  resetFluid()
+
+window.resetFluid = ()=>
+  window.Fluid = if settings.method == 'mac' then MAC else PIC
+  if window.fluid
+    window.fluid.delete()
+  window.fluid = new Fluid()
+
 window.PoissonSolver = PoissonSolver
-window.Fluid = PIC
+window.paused = false
+window.simulationPause = =>
+  window.paused = not paused
