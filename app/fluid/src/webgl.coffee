@@ -309,13 +309,14 @@ class GPU
     @quadVertexPosbuffer = quadVertexPosbuffer
     @quadVertexIndbuffer = quadVertexIndbuffer
 
-  plotTexture: (texture, offset=[0, 0])->
+  plotTexture: (texture, offset=[0, 0], log)->
     gpu.programs.plot.draw
       uniforms:
         bufSize: [texture.width, texture.height]
         screenSize: [canvasFb.width, canvasFb.height]
         texture: [texture, gl.NEAREST]
         offset: offset
+        transform: log
       vertexData: 'quad'
       target: canvasFb
       clear: true

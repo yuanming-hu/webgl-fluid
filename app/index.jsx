@@ -41,7 +41,7 @@ class Options extends React.Component {
         super(props);
         this.state = {
             warmStarting: true, rk2Advection: false, jacobiDamping: 0.67, iterations: 10,
-            method: 'pic', resolution: '128', timeStep: 0.03, substeps: 10, flipBlending: 0.8
+            method: 'pic', resolution: '128', timeStep: 0.03, substeps: 10, flipBlending: 0.8, particleSize: 2.5
         };
         window.settings = this.state;
     }
@@ -95,8 +95,11 @@ class Options extends React.Component {
                             value={this.state.initialState}
                         />
                         <br />
-                        <br />
                         <p style={{color: '#933'}}> Settings above will be applied after RESETTING. </p>
+                        <br />
+                        Visual Particle Size
+                        <Slider min={1} max={15} step={0.1} value={this.state.particleSize} editable
+                                onChange={this.handleChange.bind(this, 'particleSize')}/>
                     </CardText>
                 </Card>
                 <Card style={{width: '300px', float: 'left', margin: '10px', height: '600px'}}>

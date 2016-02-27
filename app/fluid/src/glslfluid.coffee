@@ -6,13 +6,17 @@ class MAC
     console.log "GLSLFluid initialzing"
     @initialOffset = [0.25, 0.25]
 
-    @dim = 64
+    @dim = parseInt(settings.resolution)
     @gravity = [0, -1]
     @t = 0.0
     @initializeFbs()
 
-    @simulate()
     @initializeMouse()
+    @deleted = false
+    @simulate()
+
+  delete: =>
+    @deleted = true
 
   initializeMouse: =>
     @mouseStrength = 2.2
@@ -75,12 +79,16 @@ class MAC
     prog = gpu.programs.points.use().setUniforms
       texture: @particleFbs
       bufSize: [@dim, @dim]
+      particleSize: parseFloat(settings.particleSize)
 
     gl.bindBuffer(gl.ARRAY_BUFFER, @pointIdBuffer)
     gl.vertexAttribPointer(prog.attributes.id, @pointIdBuffer.itemSize, gl.FLOAT, false, 0, 0)
 
-    @backBuffer.bindFB().clear()
+    @backBuffer.bindFB().clear([0, 0, 0, 1])
     gl.enable gl.BLEND
+    # gl.blendFunc gl.SRC_ALPHA, gl.ONE
+    # gl.blendFunc gl.ONE_MINUS_SRC_ALPHA, gl.SRC_ALPHA
+    # gl.blendFunc gl.ONE, gl.SRC_ALPHA
     gl.blendFunc gl.SRC_ALPHA, gl.ONE
     gl.drawArrays gl.POINTS, 0, @pointIdBuffer.numItems
     gl.disable gl.BLEND
@@ -215,7 +223,7 @@ class MAC
     @uFbs.swap()
     @vFbs.swap()
 
-  step: (deltaT)=>
+  substep: (deltaT)=>
     @moveMarkers(deltaT)
     @markCells()
     @applyExternalForces(deltaT)
@@ -225,19 +233,33 @@ class MAC
     @buildSystem()
     @poissonSolver.solve(@systemFb, @pressureFbs)
     @applyPressure()
+
+  animate: =>
+    if @deleted
+      return
+    if paused
+      requestAnimationFrame @animate
+      return
+
+    deltaT = settings.timeStep
+    gpu.timeingStats.end()
+    gpu.fpsStats.end()
+    gpu.timeingStats.begin()
+    gpu.fpsStats.begin()
+    steps = settings.substeps
+    for i in [1..steps]
+      @substep(deltaT / steps)
     @renderParticles()
-    gpu.plotTexture @backBuffer.texture
-# gpu.plotTexture system.texture
-# gpu.plotTexture @pressureFbs.source.texture
-# gpu.plotTexture @vFbs.target.texture, [0, -1]
+    gpu.plotTexture @backBuffer, [0, 0], 1
+    requestAnimationFrame @animate
 
   simulate: =>
     @initialize()
-    setInterval ()=>
-          @step 0.01
-      , 0
+    requestAnimationFrame @animate
 
 class PIC extends MAC
+  animate: =>
+    super()
   constructor: ->
     @initialOffset = [0.05, 0.02]
 
@@ -252,13 +274,9 @@ class PIC extends MAC
     @poissonSolver = new PoissonSolver(@dim)
     @gravity = [0, -1]
     @t = 0.0
-    @simulate()
-    @initializeMouse()
-    @needReset = false
     @deleted = false
-    window.simulationReset =  =>
-      @needReset = true
-      window.paused = false
+    @initializeMouse()
+    @simulate()
 
   moveParticles: (deltaT)=>
     gpu.programs.moveParticles.draw
@@ -355,34 +373,8 @@ class PIC extends MAC
     @resample(deltaT)
     @moveParticles(deltaT)
 
-  step: =>
-    if @deleted
-      return
-    if paused
-      requestAnimationFrame @step
-      return
 
-    if @needReset
-      @needReset = false
-      @initializeSimulation()
-    deltaT = settings.timeStep
-    gpu.timeingStats.end()
-    gpu.fpsStats.end()
-    gpu.timeingStats.begin()
-    gpu.fpsStats.begin()
-    steps = settings.substeps
-    for i in [1..steps]
-      @substep(deltaT / steps)
-    @renderParticles()
-    gpu.plotTexture @backBuffer
-    requestAnimationFrame @step
 
-  simulate: =>
-    @initialize()
-    requestAnimationFrame @step
-
-  delete: =>
-    @deleted = true
 
 class PoissonSolver
   constructor: (@dim)->
@@ -394,11 +386,12 @@ class PoissonSolver
 
   solve: (systemFb, pressureFbs)=>
     if @first or not settings.warmStarting
-      console.log 'clear'
       pressureFbs.source.bindFB().clear([0.5, 0, 0, 0])
       @first = false
 
     iterations = parseInt(settings.iterations)
+    if iterations == 0
+      return
     for i in [1..iterations]
       gpu.programs.jacobiSolver.draw
         uniforms:
@@ -416,13 +409,14 @@ window.initialize = ()=>
     'jacobiSolver', 'advect', 'applyBoundaryConditions',
     'extrapolate', 'jacobiSolver', 'applyPressure', 'moveParticles',
     'scatterVelocity', 'normalizeVelocity', 'resample', 'applyExternalForces',
-  ].concat(['initialize', 'iterate', 'points',
+    'initialize', 'iterate', 'points',
     'markCells', 'buildSystem', 'applyExternalForcesPIC',
     'jacobiSolver', 'advect', 'applyBoundaryConditions',
     'extrapolate', 'jacobiSolver', 'applyPressure', 'moveParticles',
-    'scatterVelocity', 'normalizeVelocity', 'resample', 'applyExternalForces'
-  ])
+    'scatterVelocity', 'normalizeVelocity', 'resample', 'applyExternalForces', 'moveMarkers', 'applyBoundaryCondAndMarkValid'
+  ]
   gpu.initialize programs
+
   resetFluid()
 
 window.resetFluid = ()=>
@@ -435,3 +429,6 @@ window.PoissonSolver = PoissonSolver
 window.paused = false
 window.simulationPause = =>
   window.paused = not paused
+
+window.canvasClick = (e) =>
+  console.log e
