@@ -4,7 +4,6 @@ require('./webgl')
 class MAC
   constructor: ->
     console.log "GLSLFluid initialzing"
-    @initialOffset = [0.25, 0.25]
 
     @dim = parseInt(settings.resolution)
     @gravity = [0, -1]
@@ -65,14 +64,36 @@ class MAC
     @pointIdBuffer = pointIdBuffer
     @initializeSimulation()
 
-
   initializeSimulation: =>
+    type = settings.initialState
+    scene = 0
+    offset = [0.0, 0.0]
+    if type == 'dam-left'
+      scene = 0
+      offset = [0.05, 0.02]
+    else if type == 'dam-middle'
+      scene = 0
+      offset = [0.25, 0.05]
+    else if type == 'dam-leftmost'
+      scene = 0
+      offset = [0.0, 0.0]
+    else if type  == 'dam-double'
+      scene = 1
+    else if type  == 'block-top'
+      scene = 2
+    else if type  == 'block-bottom'
+      scene = 3
+
+    # {value: 'stationary-bottom', label: 'Stationary (Bottom)'},
+    # {value: 'stationary-top', label: 'Stationary (Top)'}
     gpu.programs.initialize.draw
       uniforms:
         bufSize: [@dim, @dim]
-        offset: @initialOffset
+        offset: offset
+        scene: scene
       target: @particleFbs
       vertexData: 'quad'
+
     @poissonSolver.reset()
 
   renderParticles: ()=>
@@ -261,8 +282,6 @@ class PIC extends MAC
   animate: =>
     super()
   constructor: ->
-    @initialOffset = [0.05, 0.02]
-
     @dim = parseFloat(settings.resolution)
     @particleFbs = new DoubleFramebuffer(@dim, @dim)
     @pressureFbs = new DoubleFramebuffer(@dim, @dim, 1)
@@ -424,6 +443,7 @@ window.resetFluid = ()=>
   if window.fluid
     window.fluid.delete()
   window.fluid = new Fluid()
+  window.paused = false
 
 window.PoissonSolver = PoissonSolver
 window.paused = false

@@ -29,11 +29,12 @@ const methods = [
 ];
 
 const initialStates = [
+    {value: 'dam-leftmost', label: 'Dam Break (Leftmost)'},
     {value: 'dam-left', label: 'Dam Break (Left)'},
     {value: 'dam-middle', label: 'Dam Break (Middle)'},
     {value: 'dam-double', label: 'Dam Break (Double)'},
-    {value: 'stationary-bottom', label: 'Stationary (Bottom)'},
-    {value: 'stationary-top', label: 'Stationary (Top)'}
+    {value: 'block-bottom', label: 'Block (Bottom)'},
+    {value: 'block-top', label: 'Block (Top)'}
 ];
 
 class Options extends React.Component {
@@ -41,7 +42,8 @@ class Options extends React.Component {
         super(props);
         this.state = {
             warmStarting: true, rk2Advection: false, jacobiDamping: 0.67, iterations: 10,
-            method: 'pic', resolution: '128', timeStep: 0.03, substeps: 10, flipBlending: 0.8, particleSize: 2.5
+            method: 'pic', resolution: '128', timeStep: 0.03, substeps: 10, flipBlending: 0.8, particleSize: 2.5,
+            initialState: 'dam-left'
         };
         window.settings = this.state;
     }
