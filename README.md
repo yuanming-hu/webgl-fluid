@@ -1,3 +1,6 @@
-# UI for Fluid Simulation
+# Install
+`npm install`
 
-Modified Based on react-toolbox-example
+# Run
+`npm start`
+and then open localhost:8080

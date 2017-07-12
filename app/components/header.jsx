@@ -5,7 +5,7 @@ import style from './style';
 
 const MainAppBar = () => (
   <AppBar className={style.appbar} flat>
-    <h1 className={style.title}>GPU-based Fluid Simulation Online</h1>
+    <h1 className={style.title}>GPU-based Fluid Simulation</h1>
   </AppBar>
 );
 

@@ -9,7 +9,6 @@ class MAC
     @gravity = [0, -1]
     @t = 0.0
     @initializeFbs()
-
     @initializeMouse()
     @deleted = false
     @simulate()
@@ -18,19 +17,19 @@ class MAC
     @deleted = true
 
   initializeMouse: =>
-    @mouseStrength = 2.2
+    @mouseStrength = 0.5
     @dragging = false
     @mouseCoord = [0, 0]
 
-    return
-    $(canvas).mousedown (e) =>
+    window.onCanvasMouseDown = (e) =>
       @dragging = true
-    $(canvas).mouseup (e) =>
+    window.onCanvasMouseUp = (e) =>
       @dragging = false
-    $(canvas).mousemove (e) =>
+    window.onCanvasMouseMove = (e) =>
       x = (e.pageX - canvas.offsetLeft) / canvas.width
       y = (canvas.height - (e.pageY - canvas.offsetTop)) / canvas.height
       @mouseCoord = [x, y]
+
 
   initializeFbs: =>
     @particleFbs = new DoubleFramebuffer(@dim, @dim)

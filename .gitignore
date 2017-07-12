@@ -3,3 +3,5 @@ npm-debug.log
 build
 .idea
 .DS_Store
+log
+build_old
